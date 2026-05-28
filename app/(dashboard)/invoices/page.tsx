@@ -5,12 +5,62 @@ import { Plus, MoreVertical, FileText, X, Loader2, Download, Send, Pencil, Trash
 import ActionMenu from "@/components/ActionMenu";
 import { createClient } from "@/utils/supabase/client";
 
+const servicesList = [
+  {
+    category: "Marketing & Automation",
+    items: [
+      "Organic Social Media Management",
+      "Influencer Marketing",
+      "Email & SMS Marketing",
+      "Marketing Automation"
+    ]
+  },
+  {
+    category: "Branding & Creative",
+    items: [
+      "Branding & Visual Identity",
+      "Content Creation",
+      "Video Production & Animation",
+      "Graphic Design"
+    ]
+  },
+  {
+    category: "SEO & Paid Ads",
+    items: [
+      "Search Engine Optimization (SEO)",
+      "Local SEO",
+      "Pay-Per-Click (PPC) Advertising",
+      "Paid Social Advertising"
+    ]
+  },
+  {
+    category: "Web & Software Development",
+    items: [
+      "Website Design & Development",
+      "Mobile App Development",
+      "UX/UI Design",
+      "Website Maintenance",
+      "Software Development"
+    ]
+  },
+  {
+    category: "Strategy & Analytics",
+    items: [
+      "Conversion Rate Optimization (CRO)",
+      "Data Analytics & Business Intelligence",
+      "Market Research & Digital Strategy",
+      "Online Reputation Management (ORM)"
+    ]
+  }
+];
+
 const statusStyles = {
   Paid: "bg-teal-50 text-teal-600 ring-1 ring-teal-500/20",
   Sent: "bg-violet-50 text-violet-600 ring-1 ring-blue-600/20",
   Draft: "bg-slate-100 text-slate-600 ring-1 ring-zinc-600/20",
   Overdue: "bg-rose-50 text-rose-600 ring-1 ring-rose-500/20",
 };
+
 
 export default function InvoicesPage() {
   const supabase = createClient();
@@ -23,6 +73,8 @@ export default function InvoicesPage() {
     amount: "", 
     currency: "₹", 
     dueDate: "", 
+    service: "",
+    customService: "",
     clientName: "",
     clientEmail: "",
     clientPhone: "",
@@ -130,7 +182,7 @@ export default function InvoicesPage() {
           </thead>
           <tbody>
             <tr style="background-color: #e0f2fe;">
-              <td style="padding: 12px;">1. Services Rendered</td>
+              <td style="padding: 12px;">1. ${invData.notes || 'Services Rendered'}</td>
               <td style="padding: 12px;">18%</td>
               <td style="padding: 12px;">1</td>
               <td style="padding: 12px;">₹ ${baseAmount.toFixed(2)}</td>
@@ -255,7 +307,8 @@ export default function InvoicesPage() {
         rawDate: inv.issue_date,
         dueDate: new Date(inv.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         rawDueDate: inv.due_date,
-        status: inv.status
+        status: inv.status,
+        notes: inv.notes
       })));
     }
     
@@ -294,12 +347,17 @@ export default function InvoicesPage() {
   });
 
   const handleEdit = (invoice: any) => {
+    const flatServices = servicesList.flatMap(group => group.items);
+    const isPredefined = invoice.notes && flatServices.includes(invoice.notes);
+
     setNewInvoice({
       client: invoice.client_id,
       clientName: invoice.client,
       amount: invoice.rawAmount?.toString() || "",
       currency: "₹",
       dueDate: invoice.rawDueDate || "",
+      service: invoice.notes ? (isPredefined ? invoice.notes : "Other") : "",
+      customService: invoice.notes && !isPredefined ? invoice.notes : "",
       clientEmail: "",
       clientPhone: "",
       clientAddress: "",
@@ -361,13 +419,16 @@ export default function InvoicesPage() {
 
     if (!clientId) return;
 
+    const chosenService = newInvoice.service === "Other" ? newInvoice.customService : newInvoice.service;
+
     const invoiceData = {
       client_id: clientId,
       invoice_number: `INV-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
       total: parseFloat(newInvoice.amount) || 0,
       issue_date: new Date().toISOString().split('T')[0],
       due_date: newInvoice.dueDate || new Date().toISOString().split('T')[0],
-      status: editingId ? undefined : "Draft" // preserve status on edit
+      status: editingId ? undefined : "Draft", // preserve status on edit
+      notes: chosenService || null
     };
 
     if (editingId) {
@@ -381,7 +442,23 @@ export default function InvoicesPage() {
     }
     
     setIsModalOpen(false);
-    setNewInvoice({ client: "", clientName: "", amount: "", currency: "₹", dueDate: "", clientEmail: "", clientPhone: "", clientAddress: "" });
+    setNewInvoice({ 
+      client: "", 
+      clientName: "", 
+      amount: "", 
+      currency: "₹", 
+      dueDate: "", 
+      service: "", 
+      customService: "", 
+      clientEmail: "", 
+      clientPhone: "", 
+      clientAddress: "",
+      clientContact: "",
+      clientWebsite: "",
+      clientIndustry: "",
+      clientTaxId: "",
+      clientNotes: ""
+    });
     setClientMode("select");
   };
 
@@ -462,7 +539,10 @@ export default function InvoicesPage() {
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50">
                         <FileText className="h-5 w-5 text-violet-500" />
                       </div>
-                      <span className="font-medium text-slate-800">{invoice.invoice_number}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-slate-800">{invoice.invoice_number}</span>
+                        {invoice.notes && <span className="text-xs text-violet-500 font-semibold mt-0.5">{invoice.notes}</span>}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-800">{invoice.client}</td>
@@ -503,7 +583,34 @@ export default function InvoicesPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-slate-800">{editingId ? "Edit Invoice" : "Create Invoice"}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingId(null);
+                  setNewInvoice({ 
+                    client: "", 
+                    clientName: "", 
+                    amount: "", 
+                    currency: "₹", 
+                    dueDate: "", 
+                    service: "", 
+                    customService: "", 
+                    clientEmail: "", 
+                    clientPhone: "", 
+                    clientAddress: "",
+                    clientContact: "",
+                    clientWebsite: "",
+                    clientIndustry: "",
+                    clientTaxId: "",
+                    clientNotes: ""
+                  });
+                  setClientMode("select");
+                }} 
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
             <form onSubmit={handleAddInvoice} className="space-y-4">
               <div>
@@ -582,6 +689,41 @@ export default function InvoicesPage() {
                   </div>
                 )}
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Service *</label>
+                <select
+                  required
+                  value={newInvoice.service}
+                  onChange={e => setNewInvoice({...newInvoice, service: e.target.value})}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-violet-400 focus:outline-none bg-white text-slate-800"
+                >
+                  <option value="">Select a service...</option>
+                  {servicesList.map(group => (
+                    <optgroup key={group.category} label={group.category} className="font-semibold text-slate-500 bg-white">
+                      {group.items.map(item => (
+                        <option key={item} value={item} className="text-slate-800 font-normal">{item}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                  <option value="Other" className="text-violet-600 font-semibold bg-violet-50">Other (Enter Manually)...</option>
+                </select>
+              </div>
+
+              {newInvoice.service === "Other" && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Custom Service Name *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Enter custom service name"
+                    value={newInvoice.customService}
+                    onChange={e => setNewInvoice({...newInvoice, customService: e.target.value})}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none text-slate-800 bg-white"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Amount *</label>
                 <div className="flex gap-2">
@@ -600,7 +742,34 @@ export default function InvoicesPage() {
                 <input type="date" value={newInvoice.dueDate} onChange={e => setNewInvoice({...newInvoice, dueDate: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none text-slate-600 bg-white" />
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingId(null);
+                    setNewInvoice({ 
+                      client: "", 
+                      clientName: "", 
+                      amount: "", 
+                      currency: "₹", 
+                      dueDate: "", 
+                      service: "", 
+                      customService: "", 
+                      clientEmail: "", 
+                      clientPhone: "", 
+                      clientAddress: "",
+                      clientContact: "",
+                      clientWebsite: "",
+                      clientIndustry: "",
+                      clientTaxId: "",
+                      clientNotes: ""
+                    });
+                    setClientMode("select");
+                  }} 
+                  className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
                 <button type="submit" className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600 transition-colors">{editingId ? "Save Changes" : "Create Invoice"}</button>
               </div>
             </form>
