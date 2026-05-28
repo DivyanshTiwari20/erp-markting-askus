@@ -23,13 +23,20 @@ export default function ClientsPage() {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('clients')
-      .select('*')
+      .select('*, invoices(total)')
       .order('created_at', { ascending: false });
       
     if (error) {
       console.error("Error fetching clients:", error);
     } else {
-      setClients(data || []);
+      const clientsWithTotal = (data || []).map(client => {
+        const total = client.invoices?.reduce((acc: number, inv: any) => acc + (parseFloat(inv.total) || 0), 0) || 0;
+        return {
+          ...client,
+          totalBilled: `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        };
+      });
+      setClients(clientsWithTotal);
     }
     setIsLoading(false);
   };

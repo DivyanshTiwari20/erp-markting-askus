@@ -15,13 +15,28 @@ export default async function ClientProfilePage({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: client, error } = await supabase
     .from('clients')
-    .select('*')
+    .select('*, invoices(*)')
     .eq('id', resolvedParams.id)
     .single();
 
   if (error || !client) {
     notFound();
   }
+
+  const total = client.invoices?.reduce((acc: number, inv: any) => acc + (parseFloat(inv.total) || 0), 0) || 0;
+  client.totalBilled = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const clientHistory = (client.invoices || [])
+    .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .map((inv: any) => ({
+      id: inv.id,
+      type: "Invoice",
+      title: `Invoice ${inv.invoice_number} created`,
+      date: new Date(inv.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      amount: `₹${parseFloat(inv.total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }));
+
+  const displayHistory = clientHistory.length > 0 ? clientHistory : [];
 
   return (
     <div className="space-y-8 p-8 flex-1">
@@ -127,7 +142,9 @@ export default async function ClientProfilePage({ params }: { params: Promise<{ 
             </div>
             <div className="p-0">
               <ul className="divide-y divide-slate-100">
-                {dummyHistory.map((item, index) => (
+                {displayHistory.length === 0 ? (
+                  <li className="p-6 text-center text-slate-500 text-sm">No activity history found.</li>
+                ) : displayHistory.map((item: any, index: number) => (
                   <li key={item.id} className="p-6 transition-colors hover:bg-[#fdfbf7]/50">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4">
