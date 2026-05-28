@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, MoreVertical, FileText, X, Loader2 } from "lucide-react";
+import { Plus, MoreVertical, FileText, X, Loader2, Download, Send, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
 import { createClient } from "@/utils/supabase/client";
 
@@ -18,11 +18,50 @@ export default function InvoicesPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newInvoice, setNewInvoice] = useState({ client: "", amount: "", currency: "₹", dueDate: "", clientName: "" });
+  const [newInvoice, setNewInvoice] = useState({ 
+    client: "", 
+    amount: "", 
+    currency: "₹", 
+    dueDate: "", 
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    clientAddress: ""
+  });
   const [clientMode, setClientMode] = useState<"select" | "create">("select");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [timeFilter, setTimeFilter] = useState("All Time");
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const handleDownload = async (invoice: any) => {
+    const html2pdf = (await import('html2pdf.js')).default;
+    const element = document.createElement('div');
+    element.innerHTML = `
+      <div style="padding: 40px; font-family: sans-serif; color: #334155;">
+        <h1 style="color: #8b5cf6; margin-bottom: 20px;">INVOICE ${invoice.invoice_number}</h1>
+        <p><strong>Status:</strong> ${invoice.status}</p>
+        <p><strong>Client:</strong> ${invoice.client}</p>
+        <p><strong>Issue Date:</strong> ${invoice.date}</p>
+        <p><strong>Due Date:</strong> ${invoice.dueDate}</p>
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+          <h2>Total Amount: ${invoice.amount}</h2>
+        </div>
+      </div>
+    `;
+    html2pdf().from(element).save(`${invoice.invoice_number}.pdf`);
+  };
+
+  const handleSend = (invoice: any) => {
+    const subject = encodeURIComponent(`Invoice ${invoice.invoice_number}`);
+    const body = encodeURIComponent(`Hello,\n\nPlease find the details for Invoice ${invoice.invoice_number}.\n\nAmount: ${invoice.amount}\nDue Date: ${invoice.dueDate}\n\nThank you.`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    handleStatusChange(invoice.id, 'Sent');
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    const { error } = await supabase.from('invoices').update({ status: newStatus }).eq('id', id);
+    if (!error) fetchData();
+  };
 
   useEffect(() => {
     fetchData();
@@ -92,6 +131,9 @@ export default function InvoicesPage() {
       amount: invoice.rawAmount?.toString() || "",
       currency: "₹",
       dueDate: invoice.rawDueDate || "",
+      clientEmail: "",
+      clientPhone: "",
+      clientAddress: ""
     });
     setEditingId(invoice.id);
     setClientMode("select");
@@ -107,7 +149,13 @@ export default function InvoicesPage() {
     if (clientMode === "create" && newInvoice.clientName) {
       const { data: newClientData, error: clientErr } = await supabase
         .from('clients')
-        .insert([{ name: newInvoice.clientName, status: 'Active' }])
+        .insert([{ 
+          name: newInvoice.clientName, 
+          status: 'Active',
+          email: newInvoice.clientEmail,
+          phone: newInvoice.clientPhone,
+          address: newInvoice.clientAddress
+        }])
         .select()
         .single();
         
@@ -118,6 +166,13 @@ export default function InvoicesPage() {
         console.error("Failed to create client:", clientErr);
         return;
       }
+    } else if (newInvoice.clientEmail || newInvoice.clientPhone || newInvoice.clientAddress) {
+      // Sync info to existing client
+      await supabase.from('clients').update({
+        ...(newInvoice.clientEmail && { email: newInvoice.clientEmail }),
+        ...(newInvoice.clientPhone && { phone: newInvoice.clientPhone }),
+        ...(newInvoice.clientAddress && { address: newInvoice.clientAddress }),
+      }).eq('id', clientId);
     }
 
     if (!clientId) return;
@@ -128,11 +183,11 @@ export default function InvoicesPage() {
       total: parseFloat(newInvoice.amount) || 0,
       issue_date: new Date().toISOString().split('T')[0],
       due_date: newInvoice.dueDate || new Date().toISOString().split('T')[0],
-      status: "Draft"
+      status: editingId ? undefined : "Draft" // preserve status on edit
     };
 
     if (editingId) {
-      const { invoice_number, issue_date, ...updateData } = invoiceData;
+      const { invoice_number, issue_date, status, ...updateData } = invoiceData;
       const { error } = await supabase.from('invoices').update(updateData).eq('id', editingId);
       if (!error) fetchData();
       setEditingId(null);
@@ -142,7 +197,7 @@ export default function InvoicesPage() {
     }
     
     setIsModalOpen(false);
-    setNewInvoice({ client: "", clientName: "", amount: "", currency: "₹", dueDate: "" });
+    setNewInvoice({ client: "", clientName: "", amount: "", currency: "₹", dueDate: "", clientEmail: "", clientPhone: "", clientAddress: "" });
     setClientMode("select");
   };
 
@@ -240,8 +295,13 @@ export default function InvoicesPage() {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <ActionMenu 
-                        onEdit={() => handleEdit(invoice)} 
-                        onDelete={() => handleDelete(invoice.id)} 
+                        actions={[
+                          { label: "Edit", icon: Pencil, onClick: () => handleEdit(invoice) },
+                          { label: "Download PDF", icon: Download, onClick: () => handleDownload(invoice) },
+                          { label: "Send Email", icon: Send, onClick: () => handleSend(invoice) },
+                          { label: "Mark Paid", icon: CheckCircle2, variant: "success", onClick: () => handleStatusChange(invoice.id, "Paid") },
+                          { label: "Delete", icon: Trash2, variant: "danger", onClick: () => handleDelete(invoice.id) },
+                        ]}
                       />
                     </div>
                   </td>
@@ -288,6 +348,20 @@ export default function InvoicesPage() {
                     <button type="button" onClick={() => { setClientMode("select"); setNewInvoice({...newInvoice, clientName: ""}); }} className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                   </div>
                 )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Client Email (Optional)</label>
+                  <input type="email" placeholder="client@example.com" value={newInvoice.clientEmail} onChange={e => setNewInvoice({...newInvoice, clientEmail: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Client Phone (Optional)</label>
+                  <input type="tel" placeholder="+1 234 567 890" value={newInvoice.clientPhone} onChange={e => setNewInvoice({...newInvoice, clientPhone: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Client Address (Optional)</label>
+                <input type="text" placeholder="123 Main St, City, Country" value={newInvoice.clientAddress} onChange={e => setNewInvoice({...newInvoice, clientAddress: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Amount *</label>

@@ -2,13 +2,19 @@ import { useState, useRef, useEffect } from "react";
 import { MoreVertical, Pencil, Trash2, LucideIcon } from "lucide-react";
 import { createPortal } from "react-dom";
 
+export interface MenuAction {
+  label: string;
+  icon?: LucideIcon;
+  onClick: () => void;
+  variant?: "default" | "danger" | "success";
+}
+
 interface ActionMenuProps {
-  onEdit: () => void;
-  onDelete: () => void;
+  actions: MenuAction[];
   icon?: LucideIcon;
 }
 
-export default function ActionMenu({ onEdit, onDelete, icon: Icon = MoreVertical }: ActionMenuProps) {
+export default function ActionMenu({ actions, icon: Icon = MoreVertical }: ActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -53,21 +59,27 @@ export default function ActionMenu({ onEdit, onDelete, icon: Icon = MoreVertical
   const menu = isOpen ? (
     <div 
       ref={menuRef}
-      className="fixed mt-1 w-32 rounded-lg border border-slate-200 bg-white shadow-lg z-[9999] overflow-hidden text-left"
+      className="fixed mt-1 w-40 rounded-lg border border-slate-200 bg-white shadow-lg z-[9999] overflow-hidden text-left"
       style={{ top: coords.top, right: coords.right }}
     >
-      <button 
-        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit(); }} 
-        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
-      >
-        <Pencil className="h-4 w-4" /> Edit
-      </button>
-      <button 
-        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete(); }} 
-        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
-      >
-        <Trash2 className="h-4 w-4" /> Delete
-      </button>
+      {actions.map((action, idx) => {
+        const ActionIcon = action.icon;
+        const colorClass = action.variant === "danger" 
+          ? "text-rose-600 hover:bg-rose-50" 
+          : action.variant === "success"
+          ? "text-teal-600 hover:bg-teal-50"
+          : "text-slate-600 hover:bg-slate-50";
+
+        return (
+          <button 
+            key={idx}
+            onClick={(e) => { e.stopPropagation(); setIsOpen(false); action.onClick(); }} 
+            className={`flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors ${colorClass}`}
+          >
+            {ActionIcon && <ActionIcon className="h-4 w-4" />} {action.label}
+          </button>
+        );
+      })}
     </div>
   ) : null;
 

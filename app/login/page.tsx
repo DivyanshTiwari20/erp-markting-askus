@@ -13,13 +13,18 @@ export default function LoginPage() {
     setError("");
     setLoading(true); // Simulate network request
     await new Promise((resolve) => setTimeout(resolve, 600));
-    if (username === "admin" && password === "admin") {
-      // Set a simple cookie
-      document.cookie = "auth=true; path=/; max-age=86400";
+    if (
+      (username === "admin" && password === "admin") ||
+      (username === "sales" && password === "sales") ||
+      (username === "finance" && password === "finance")
+    ) {
+      // Set simple cookies for auth and role
+      document.cookie = `auth=true; path=/; max-age=86400`;
+      document.cookie = `role=${username}; path=/; max-age=86400`;
       router.push("/");
       router.refresh(); // Force refresh to trigger middleware if needed
     } else {
-      setError("Invalid username or password. Try admin/admin.");
+      setError("Invalid username or password. Try admin/admin, sales/sales, or finance/finance.");
       setLoading(false);
     }
   };
