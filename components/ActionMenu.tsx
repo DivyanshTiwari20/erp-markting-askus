@@ -10,11 +10,17 @@ export interface MenuAction {
 }
 
 interface ActionMenuProps {
-  actions: MenuAction[];
+  actions?: MenuAction[];
+  onEdit?: () => void;
+  onDelete?: () => void;
   icon?: LucideIcon;
 }
 
-export default function ActionMenu({ actions, icon: Icon = MoreVertical }: ActionMenuProps) {
+export default function ActionMenu({ actions, onEdit, onDelete, icon: Icon = MoreVertical }: ActionMenuProps) {
+  const menuActions = actions || [
+    ...(onEdit ? [{ label: "Edit", icon: Pencil, onClick: onEdit }] : []),
+    ...(onDelete ? [{ label: "Delete", icon: Trash2, variant: "danger" as const, onClick: onDelete }] : [])
+  ];
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -62,7 +68,7 @@ export default function ActionMenu({ actions, icon: Icon = MoreVertical }: Actio
       className="fixed mt-1 w-40 rounded-lg border border-slate-200 bg-white shadow-lg z-[9999] overflow-hidden text-left"
       style={{ top: coords.top, right: coords.right }}
     >
-      {actions.map((action, idx) => {
+      {menuActions.map((action, idx) => {
         const ActionIcon = action.icon;
         const colorClass = action.variant === "danger" 
           ? "text-rose-600 hover:bg-rose-50" 
