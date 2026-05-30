@@ -1,5 +1,6 @@
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
+import RoleGate from "@/components/layout/RoleGate";
 export default function DashboardLayout({
   children,
 }: {
@@ -13,7 +14,7 @@ export default function DashboardLayout({
         {" "}
         <Topbar />{" "}
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
-          {children}
+          <RoleGate>{children}</RoleGate>
         </main>{" "}
       </div>{" "}
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -14,7 +15,8 @@ import {
   LogOut,
   Bot,
   Briefcase,
-  Wallet
+  Wallet,
+  Lock
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 const navigation = [
@@ -32,8 +34,19 @@ const navigation = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getRole = () => {
+      const match = document.cookie.match(/(?:^|; )role=([^;]*)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    };
+    setRole(getRole());
+  }, []);
+
   const handleLogout = () => {
     document.cookie = "auth=; path=/; max-age=0";
+    document.cookie = "role=; path=/; max-age=0";
     router.push("/login");
     router.refresh();
   };
@@ -54,6 +67,7 @@ export default function Sidebar() {
         {" "}
         {navigation.map((item) => {
           const isActive = pathname === item.href;
+          const isItemLocked = role === "sales" && item.href !== "/invoices";
           return (
             <Link
               key={item.name}
@@ -74,7 +88,10 @@ export default function Sidebar() {
                     : "text-slate-400 group-hover:text-slate-500",
                 )}
               />{" "}
-              {item.name}{" "}
+              <span className="flex-1">{item.name}</span>{" "}
+              {isItemLocked && (
+                <Lock className="h-3.5 w-3.5 text-slate-300 group-hover:text-violet-400 transition-colors shrink-0" />
+              )}
             </Link>
           );
         })}{" "}

@@ -24,16 +24,10 @@ export function proxy(request: NextRequest) {
 
   // Role-based route protection
   if (auth === 'true' && !isLoginPage) {
-    // Sales role restrictions
-    if (role === 'sales') {
-      const allowedPaths = ['/invoices', '/ai-chat', '/settings'];
-      const isAllowed = allowedPaths.some(p => pathname.startsWith(p)) || pathname === '/';
-      if (!isAllowed) {
-        return NextResponse.redirect(new URL('/invoices', request.url));
-      }
-    }
-
-    // Finance role restrictions
+    // Sales role: We let them access all paths in middleware so the client-side RoleGate
+    // can display the "Access Locked" UI (letting them "see" the page but locked).
+    
+    // Finance role restrictions (keep intact)
     if (role === 'finance') {
       const allowedPaths = ['/payroll', '/clients', '/reports', '/ai-chat', '/settings'];
       const isAllowed = allowedPaths.some(p => pathname.startsWith(p)) || pathname === '/';
