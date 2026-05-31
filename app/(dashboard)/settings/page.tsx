@@ -1,8 +1,25 @@
-import { Save, Bell, Globe, Building, CreditCard } from "lucide-react";
+"use client";
+
+import { Save, Bell, Globe, Building, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 
 export default function SettingsPage() {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    // Simulate API call or saving to local storage
+    setTimeout(() => {
+      setIsSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }, 800);
+  };
+
   return (
-    <div className="flex-1 space-y-8 p-8 max-w-4xl">
+    <form onSubmit={handleSubmit} className="flex-1 space-y-8 p-8 max-w-4xl relative">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Workspace Settings</h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -90,13 +107,19 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
-          <button className="flex items-center gap-2 rounded-xl bg-violet-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-violet-600">
+        <div className="flex justify-end pt-4 items-center gap-4">
+          {saved && (
+            <span className="flex items-center gap-1.5 text-sm font-medium text-teal-600">
+              <CheckCircle2 className="h-4 w-4" />
+              Settings saved!
+            </span>
+          )}
+          <button type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-xl bg-violet-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-violet-600 disabled:opacity-70 disabled:cursor-not-allowed">
             <Save className="h-4 w-4" />
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

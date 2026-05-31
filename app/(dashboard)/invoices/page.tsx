@@ -147,8 +147,8 @@ export default function InvoicesPage() {
               <strong>Askus Studio</strong><br/>
               Lucknow, Uttar Pradesh, India<br/><br/>
               <table style="width: 100%;">
-                <tr><td style="width: 60px;"><strong>GSTIN:</strong></td><td>09HOSPKS641L2Z0</td></tr>
-                <tr><td><strong>PAN:</strong></td><td>HOSPKS641L</td></tr>
+                <tr><td style="width: 60px;"><strong>GSTIN:</strong></td><td>09HOSPK5641L2Z0</td></tr>
+                <tr><td><strong>PAN:</strong></td><td>HOSPK5641L</td></tr>
                 <tr><td><strong>Phone:</strong></td><td>+91 80092 27002</td></tr>
               </table>
             </div>
@@ -639,7 +639,7 @@ export default function InvoicesPage() {
                         <input 
                           required 
                           type="text" 
-                          placeholder="Jashn E Adab"
+                          placeholder="Acme Corp"
                           value={newInvoice.clientName} 
                           onChange={e => setNewInvoice({...newInvoice, clientName: e.target.value})} 
                           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" 
@@ -651,25 +651,25 @@ export default function InvoicesPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person</label>
-                        <input type="text" placeholder="Ranjeet Singh" value={newInvoice.clientContact} onChange={e => setNewInvoice({...newInvoice, clientContact: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
+                        <input type="text" placeholder="John Doe" value={newInvoice.clientContact} onChange={e => setNewInvoice({...newInvoice, clientContact: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                        <input type="email" placeholder="Jashneadab@gmail.com" value={newInvoice.clientEmail} onChange={e => setNewInvoice({...newInvoice, clientEmail: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
+                        <input type="email" placeholder="john@acmecorp.com" value={newInvoice.clientEmail} onChange={e => setNewInvoice({...newInvoice, clientEmail: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                        <input type="tel" placeholder="+91 93138 22799" value={newInvoice.clientPhone} onChange={e => setNewInvoice({...newInvoice, clientPhone: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
+                        <input type="tel" placeholder="+1 555-0198" value={newInvoice.clientPhone} onChange={e => setNewInvoice({...newInvoice, clientPhone: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Website</label>
-                        <input type="text" placeholder="https://jashneadab.org/" value={newInvoice.clientWebsite} onChange={e => setNewInvoice({...newInvoice, clientWebsite: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
+                        <input type="text" placeholder="https://acmecorp.com/" value={newInvoice.clientWebsite} onChange={e => setNewInvoice({...newInvoice, clientWebsite: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
                       </div>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-                      <input type="text" placeholder="F-24, First Floor, Lajpat Nagar-2, New Delhi, India-110024" value={newInvoice.clientAddress} onChange={e => setNewInvoice({...newInvoice, clientAddress: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
+                      <input type="text" placeholder="123 Business Rd, Tech Park, City, Country" value={newInvoice.clientAddress} onChange={e => setNewInvoice({...newInvoice, clientAddress: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-violet-400 focus:outline-none" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
